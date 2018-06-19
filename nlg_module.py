@@ -21,11 +21,18 @@ class NLG:
 
 
 	# main function. generate utterance from input json
-	def nlg(self, artistName=None):
+	def nlg(self, artistName=None, keyword_only=True):
 		result = {}
 		artist = self.pickArtist() if artistName is None else artistName
 		for item in ["RECOMMEND", "DEBUT", "SIMILAR", "TV", "RECORD", "MISC"]:
 			result[item] = self.postprocess(self.aimlCoreKernel.respond(item), artist)
+		return result
+
+	def nlg_keyword(self, artistName, max_keyword_num):
+		result = {}
+		for item in ["RECOMMEND", "DEBUT", "SIMILAR", "TV", "RECORD", "MISC"]:
+			keywords = self.selectKeywords(self.aimlKeywordKernel.respond(item).split("/"), max_keyword_num)
+			result[item] = list(map(lambda x: " ".join((artistName, *x)), keywords))
 		return result
 
 	def all_question_iter(self):
@@ -34,10 +41,11 @@ class NLG:
 		
 
 	# load AIML file and train kernel
-	def loadAIML(self, coreFile="nlgAIML.xml"):
+	def loadAIML(self):
 		self.aimlCoreKernel = aiml.Kernel()
-		self.aimlCoreKernel.learn(coreFile)
-
+		self.aimlCoreKernel.learn("nlgAIML.xml")
+		self.aimlKeywordKernel = aiml.Kernel()
+		self.aimlKeywordKernel.learn("nlgKeywordAIML.xml")
 	# load tag dictionary
 	# def loadDict(self, dictFileName="dict"):
 
@@ -74,6 +82,22 @@ class NLG:
 	def pickArtist(self):
 		return random.choice(self.artists)
 
+	def selectKeywords(self, keywords, maxkeyword=3):
+		def gen(keywords, num):
+			if num == 0: return []
+			if num <= 1:
+				return list(map(lambda x: [x], keywords))
+			result = []
+			for i in range(len(keywords)):
+				startElem = keywords[i]
+				for item in gen(keywords[i+1:], num-1):
+					result.append([startElem, *item])
+			return result
+		result = []
+		for i in range(1, maxkeyword+1):
+			for item in gen(keywords, i):
+				result.append(item)
+		return result
 
 
 	# process raw json to aiml-understandable string
@@ -155,22 +179,22 @@ class NLG:
 
 
 
-	def test(self):
-		f = open("nlgtest", encoding="UTF8")
-		for line in f.readlines():
-			print(line.strip())
-			print(json.dumps(self.nlg(json.loads(line.strip())), ensure_ascii=False))
+	# def test(self):
+	# 	f = open("nlgtest", encoding="UTF8")
+	# 	for line in f.readlines():
+	# 		print(line.strip())
+	# 		print(json.dumps(self.nlg(json.loads(line.strip())), ensure_ascii=False))
 
-	def aimltest(self, teststr):
-		print(self.aimlCoreKernel.respond(teststr))
+	# def aimltest(self, teststr):
+	# 	print(self.aimlCoreKernel.respond(teststr))
 
 if __name__ == '__main__':
 	nlg = NLG("MusicalArtistEntities.txt")
 	# nlg.aimltest("hello hello w,")
-	print(nlg.nlg("싸이"))
+	print(nlg.nlg_keyword("싸이", 3))
 	x = 0
-	for item in nlg.all_question_iter():
-		print(item)
-		x += 1
-		if x == 10:
-			break
+	# for item in nlg.all_question_iter():
+	# 	print(item)
+	# 	x += 1
+	# 	if x == 10:
+	# 		break
