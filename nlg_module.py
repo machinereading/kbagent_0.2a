@@ -21,7 +21,7 @@ class NLG:
 
 
 	# main function. generate utterance from input json
-	def nlg(self, artistName=None, keyword_only=True):
+	def nlg(self, artistName=None):
 		result = {}
 		artist = self.pickArtist() if artistName is None else artistName
 		for item in ["RECOMMEND", "DEBUT", "SIMILAR", "TV", "RECORD", "MISC"]:
