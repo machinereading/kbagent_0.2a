@@ -8,7 +8,7 @@ class AnswerChecker():
 			for line in f.readlines():
 				self.keywords.append(line.strip())
 
-		words = {}
+		self.words = {}
 		self.proper_response = set([])
 
 		self.artists = []
@@ -27,6 +27,10 @@ class AnswerChecker():
 		if answer in self.proper_response:
 			return True
 		morph = list(map(lambda x: x[0], self.tagger.pos(answer, norm=True)))
+		for m in morph:
+			if m not in self.words:
+				self.words[m] = 0
+			self.words[m] += 1
 		for keyword in self.keywords:
 			if keyword in morph:
 				self.proper_response.add(answer)

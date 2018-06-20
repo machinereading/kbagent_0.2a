@@ -63,7 +63,7 @@ class NLG:
 				if(len(line.strip())) == 0: continue
 				name = line.strip().split("/")[-1].split("_(")[0].replace("_", " ") # to remove () and change _ into blank
 
-				if ord(name[0]) >= 0xAC00 and ord(name[0]) < 0xD7A3: # only korean names allowed
+				if not all(ord(c) < 128 for c in name): # all english name is removed
 					self.artists.append(name)
 
 				
